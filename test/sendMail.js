@@ -18,7 +18,7 @@ var gmailNode = require('../');
 
 // Message
 var testMessage = {
-    to: 'guptkashish@proptiger.com',
+    to: 'guptkashish@gmail.com',
     subject: 'Test Subject',
     message: 'Test Email'
 };
