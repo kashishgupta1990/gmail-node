@@ -3,22 +3,39 @@ var path = require('path');
 var readline = require('readline');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
-
-var CLIENT_SECRET_FILE_NAME = 'client_secret.json';
-var TOKEN_FILE_NAME = 'token.json';
 var SCOPES = ['https://www.googleapis.com/auth/gmail.send'];
-var TOKEN_DIR = path.join(__dirname, 'config');
-var CLIENT_SECRET_PATH = path.join(TOKEN_DIR, CLIENT_SECRET_FILE_NAME);
-var TOKEN_PATH = path.join(TOKEN_DIR, TOKEN_FILE_NAME);
+var __clientSecret;
+var __tokenFilePath;
 
-fs.readFile(CLIENT_SECRET_PATH, function (err, content) {
-    if (err) {
-        console.log('Error loading client secret file: ', err);
-        return;
-    } else {
-        authorize(JSON.parse(content), sendMail)
+var gmailClass = (function () {
+
+    var _init = function (credentials, tokenFilePath, callback) {
+        __clientSecret = credentials;
+        __tokenFilePath = tokenFilePath;
+        authorize(__clientSecret, function (auth) {
+            if (auth) {
+                callback(null, 'Successfully Initialized');
+            } else {
+                callback('Error in initializing', null);
+            }
+        });
+    };
+    var _send = function (emailObject, callback) {
+        authorize(__clientSecret, function (auth) {
+            sendMail(auth, emailObject, callback);
+        });
+    };
+    var _clearToken = function (callback) {
+        fs.unlink(__tokenFilePath, callback);
+    };
+
+    return {
+        init: _init,
+        send: _send,
+        clearToken: _clearToken
     }
-});
+
+})();
 
 function authorize(credentials, callback) {
     var clientSecret = credentials.installed.client_secret;
@@ -27,10 +44,10 @@ function authorize(credentials, callback) {
     var auth = new googleAuth();
     var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
-    fs.readFile(TOKEN_PATH, function(err, token){
-        if(err){
+    fs.readFile(__tokenFilePath, function (err, token) {
+        if (err) {
             getNewToken(oauth2Client, callback);
-        }else{
+        } else {
             oauth2Client.credentials = JSON.parse(token);
             callback(oauth2Client);
         }
@@ -50,26 +67,20 @@ function makeBody(to, subject, message) {
     return encodedMail;
 }
 
-function sendMail(auth) {
+function sendMail(auth, emailObject, callback) {
     var gmail = google.gmail('v1');
-    var raw = makeBody('kashish.gupta@proptiger.com','Hi ','yo ho - 1');
+    var raw = makeBody(emailObject.to, emailObject.subject, emailObject.message);
 
     gmail.users.messages.send({
-        auth:auth,
+        auth: auth,
         userId: 'me',
         resource: {
             raw: raw
         }
-    },function(err, response){
-        if(err){
-            console.log(err);
-        }else{
-            console.log(response);
-        }
-    });
+    }, callback);
 }
 
-function getNewToken(oauth2Client, callback){
+function getNewToken(oauth2Client, callback) {
     var authUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: SCOPES
@@ -80,32 +91,23 @@ function getNewToken(oauth2Client, callback){
         output: process.stdout
     });
 
-    r1.question('Enter the code from that page here: ',function(code){
+    r1.question('Enter the code from that page here: ', function (code) {
         r1.close();
-        oauth2Client.getToken(code, function(err,token){
-            if(err){
+        oauth2Client.getToken(code, function (err, token) {
+            if (err) {
                 console.log('Error while trying to retrieve access token', err);
                 return;
             }
             oauth2Client.credentials = token;
-            storeToken(token);
+            storeToken(token, __tokenFilePath);
             callback(oauth2Client);
         });
     });
 }
 
-function storeToken(token){
-    try{
-        fs.mkdirSync(TOKEN_DIR);
-    }catch (err){
-        if(err.code != 'EEXIST'){
-            throw err;
-        }
-    }
-    fs.writeFile(TOKEN_PATH, JSON.stringify(token));
-    console.log('Token stored to ', TOKEN_PATH);
+function storeToken(token, tokenFilePath) {
+    fs.writeFileSync(tokenFilePath, JSON.stringify(token));
+    console.log('Token stored to ', tokenFilePath);
 }
 
-
-
-module.exports = {yo:''};
+module.exports = gmailClass;
