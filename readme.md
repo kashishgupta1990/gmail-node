@@ -12,7 +12,7 @@
 - Move this file to your working directory and use it with any name like client_secret.json.
 
 ## Available GMail methods
-1. Init GMail:
+- Init GMail:
 ```javascript
 var gmailNode = require('gmail-node');
 var clientSecret = {
@@ -31,7 +31,7 @@ var clientSecret = {
 };
 gmailNode.init(clientSecret, './token.json', function(err,data){ ... });
 ```
-2. Send GMail: 
+- Send GMail: 
 ```javascript
 var emailMessage = {
     to: 'guptkashish@gmail.com',
@@ -40,7 +40,7 @@ var emailMessage = {
 };
  gmailNode.send(emailMessage, function (err, data) { ... });
 ```
-3. Clear GMail Token:
+- Clear GMail Token:
 ```javascript
 gmailNode.clearToken();
 ```
