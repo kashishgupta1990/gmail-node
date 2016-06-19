@@ -31,7 +31,7 @@ function initComplete(err, dataObject) {
         console.log('Error ', err);
     }else {
         gmailNode.send(testMessage, function (err, data) {
-            console.log(data);
+            console.log(err,data);
         });
 
         gmailNode.clearToken();
