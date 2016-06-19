@@ -11,6 +11,9 @@
 - Click the file_download (Download JSON) button to the right of the client ID.
 - Move this file to your working directory and use it with any name like client_secret.json.
 
+## Usage
+`npm install gmail-node --save`
+
 ## Available GMail methods
 - Init GMail:
 ```javascript
@@ -84,4 +87,6 @@ function initComplete(err, dataObject) {
     }
 }
 ```
+## Contribution
+It's an open source project, you can report issue and form this repository to create pull request to add features.
 

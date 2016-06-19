@@ -1,15 +1,29 @@
 {
   "name": "gmail-node",
   "version": "1.0.0",
-  "description": "",
+  "description": "It makes Gmail interation easy using Node.js",
   "main": "app.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
+  "author": "Kashish Gupta",
+  "license": "MIT",
   "dependencies": {
     "google-auth-library": "^0.9.8",
     "googleapis": "^8.2.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kashishgupta1990/gmail-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kashishgupta1990/gmail-node/issues"
+  },
+  "engines": {
+    "node": ">=0.10"
+  },
+  "keywords": [
+    "gmail",
+    "api",
+    "gmail apis",
+    "gmail node",
+    "email"
+  ]
 }
