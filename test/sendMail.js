@@ -20,7 +20,7 @@ var gmailNode = require('../');
 var testMessage = {
     to: 'guptkashish@gmail.com',
     subject: 'Test Subject',
-    message: 'Test Email'
+    message: '<h1>Hello world</h1>'
 };
 
 // ClientSecret:
@@ -30,10 +30,18 @@ function initComplete(err, dataObject) {
     if(err){
         console.log('Error ', err);
     }else {
+
+        // Send Plain content.
         gmailNode.send(testMessage, function (err, data) {
             console.log(err,data);
         });
 
+        // Send HTML content.
+        gmailNode.sendHTML(testMessage, function (err, data) {
+            console.log(err,data);
+        });
+
+        // Clear Token.
         gmailNode.clearToken();
     }
 }

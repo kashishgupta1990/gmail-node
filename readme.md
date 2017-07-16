@@ -34,7 +34,7 @@ var clientSecret = {
 };
 gmailNode.init(clientSecret, './token.json', function(err,data){ ... });
 ```
-- Send GMail: 
+- Send GMail Plain content: 
 ```javascript
 var emailMessage = {
     to: 'guptkashish@gmail.com',
@@ -43,6 +43,17 @@ var emailMessage = {
 };
  gmailNode.send(emailMessage, function (err, data) { ... });
 ```
+
+- Send GMail HTML content: 
+```javascript
+var emailMessage = {
+    to: 'guptkashish@gmail.com',
+    subject: 'Test Subject',
+    message: '<h1>Test Email</h1>'
+};
+ gmailNode.sendHTML(emailMessage, function (err, data) { ... });
+```
+
 - Clear GMail Token:
 ```javascript
 gmailNode.clearToken();
@@ -71,7 +82,7 @@ var gmailNode = require('gmail-node');
 var testMessage = {
     to: 'guptkashish@gmail.com',
     subject: 'Test Subject',
-    message: 'Test Email'
+    message: '<h1>Test Email</h1>'
 };
 
 // ClientSecret:
@@ -82,6 +93,12 @@ function initComplete(err, dataObject) {
         console.log('Error ', err);
     }else {
         gmailNode.send(testMessage, function (err, data) {
+            console.log(err,data);
+        });
+        
+        // OR
+        
+        gmailNode.sendHTML(testMessage, function (err, data) {
             console.log(err,data);
         });
     }

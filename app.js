@@ -8,7 +8,6 @@ var __clientSecret;
 var __tokenFilePath;
 
 var gmailClass = (function () {
-
     var _init = function (credentials, tokenFilePath, callback) {
         __clientSecret = credentials;
         __tokenFilePath = tokenFilePath;
@@ -22,7 +21,12 @@ var gmailClass = (function () {
     };
     var _send = function (emailObject, callback) {
         authorize(__clientSecret, function (auth) {
-            sendMail(auth, emailObject, callback);
+            sendMail(auth, emailObject, 'plain',callback);
+        });
+    };
+    var _sendHTML = function (emailObject, callback) {
+        authorize(__clientSecret, function (auth) {
+            sendMail(auth, emailObject, 'html', callback);
         });
     };
     var _clearToken = function (callback) {
@@ -32,6 +36,7 @@ var gmailClass = (function () {
     return {
         init: _init,
         send: _send,
+        sendHTML: _sendHTML,
         clearToken: _clearToken
     }
 
@@ -54,22 +59,26 @@ function authorize(credentials, callback) {
     });
 }
 
-function makeBody(to, subject, message) {
-    var str = ["Content-Type: text/plain; charset=\"UTF-8\"\n",
-        "MIME-Version: 1.0\n",
-        "Content-Transfer-Encoding: 7bit\n",
-        "to: ", to, "\n",
-        "subject: ", subject, "\n\n",
-        message
-    ].join('');
-
+function makeBody(to, subject, message, type) {
+    var str = [];
+    if(type=='html'){
+        str.push("Content-Type: text/html; charset=\"UTF-8\"\n")
+    }else{
+        str.push("Content-Type: text/plain; charset=\"UTF-8\"\n")
+    }
+    str.push("MIME-Version: 1.0\n");
+    str.push("Content-Transfer-Encoding: 7bit\n");
+    str.push("to: ", to, "\n");
+    str.push("subject: ", subject, "\n\n");
+    str.push(message);
+    str = str.join('');
     var encodedMail = new Buffer(str).toString("base64").replace(/\+/g, '-').replace(/\//g, '_');
     return encodedMail;
 }
 
-function sendMail(auth, emailObject, callback) {
+function sendMail(auth, emailObject, type, callback) {
     var gmail = google.gmail('v1');
-    var raw = makeBody(emailObject.to, emailObject.subject, emailObject.message);
+    var raw = makeBody(emailObject.to, emailObject.subject, emailObject.message, type);
 
     gmail.users.messages.send({
         auth: auth,
