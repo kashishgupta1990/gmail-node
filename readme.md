@@ -34,6 +34,7 @@ var clientSecret = {
 };
 gmailNode.init(clientSecret, './token.json', function(err,data){ ... });
 ```
+
 - Send GMail Plain content: 
 ```javascript
 var emailMessage = {
@@ -52,6 +53,29 @@ var emailMessage = {
     message: '<h1>Test Email</h1>'
 };
  gmailNode.sendHTML(emailMessage, function (err, data) { ... });
+```
+
+- Generate URL for Token: `Method: generateUrl()`: 
+This will return the URL, which user have to open to get code.
+```javascript
+gmailNode.generateUrl(clientSecret);
+```
+
+- Generate Token from `code` generate from `URL` `Method: generateToken()`:
+```javascript
+gmailNode.generateToken(clientSecret, '4/bZ94wJNeLj4b1nZ0nUhQ7fbqfjIYd4basm_GuG3br2s',(err, data)=>{
+    console.log(err || data)
+});
+```
+
+- If you have `Token` and `Credenctial` then you can directly use `Method: sendWithToken or sendHTMLWithToken` No need to call `Method: init()`:
+```javascript
+gmailNode.sendWithToken(testMessage, clientSecret, token,function (err, data) {
+    console.log(err,data);
+});
+gmailNode.sendHTMLWithToken(testMessage, clientSecret, token,function (err, data) {
+    console.log(err,data);
+});
 ```
 
 - Clear GMail Token:

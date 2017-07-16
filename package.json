@@ -1,6 +1,6 @@
 {
   "name": "gmail-node",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "It makes Gmail interation easy using Node.js",
   "main": "app.js",
   "author": "Kashish Gupta",

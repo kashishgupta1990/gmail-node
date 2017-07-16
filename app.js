@@ -1,69 +1,114 @@
-var fs = require('fs');
-var path = require('path');
-var readline = require('readline');
-var google = require('googleapis');
-var googleAuth = require('google-auth-library');
-var SCOPES = ['https://www.googleapis.com/auth/gmail.send'];
+const fs = require('fs');
+const path = require('path');
+const readline = require('readline');
+const google = require('googleapis');
+const googleAuth = require('google-auth-library');
+const SCOPES = ['https://www.googleapis.com/auth/gmail.send'];
+const EventEmitter = require('events');
+
 var __clientSecret;
 var __tokenFilePath;
+var emailEmitter = new EventEmitter();
 
 var gmailClass = (function () {
     var _init = function (credentials, tokenFilePath, callback) {
         __clientSecret = credentials;
         __tokenFilePath = tokenFilePath;
-        authorize(__clientSecret, function (auth) {
+        authorize(__clientSecret, null, function (auth) {
             if (auth) {
                 callback(null, 'Successfully Initialized');
+                emailEmitter.emit('init', {success: 'Successfully Initialized'});
             } else {
                 callback('Error in initializing', null);
+                emailEmitter.emit('init', {error: 'Error in initializing'});
             }
         });
     };
     var _send = function (emailObject, callback) {
-        authorize(__clientSecret, function (auth) {
-            sendMail(auth, emailObject, 'plain',callback);
+        authorize(__clientSecret, null, function (auth) {
+            sendMail(auth, emailObject, 'plain', callback);
         });
     };
     var _sendHTML = function (emailObject, callback) {
-        authorize(__clientSecret, function (auth) {
+        authorize(__clientSecret, null, function (auth) {
+            sendMail(auth, emailObject, 'html', callback);
+        });
+    };
+    var _sendWithToken = function (emailObject, credentials, token, callback) {
+        authorize(credentials, token, function (auth) {
+            sendMail(auth, emailObject, 'plain', callback);
+        });
+    };
+    var _sendHTMLWithToken = function (emailObject, credentials, token,callback) {
+        authorize(credentials, token, function (auth) {
             sendMail(auth, emailObject, 'html', callback);
         });
     };
     var _clearToken = function (callback) {
         fs.unlink(__tokenFilePath, callback);
     };
+    var _generateToken = function (credentials, code, callback) {
+        var clientSecret = credentials.installed.client_secret;
+        var clientId = credentials.installed.client_id;
+        var redirectUrl = credentials.installed.redirect_uris[0];
+        var auth = new googleAuth();
+        var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+        oauth2Client.getToken(code,callback);
+    };
+    var _generateUrl = function (credentials) {
+        var clientSecret = credentials.installed.client_secret;
+        var clientId = credentials.installed.client_id;
+        var redirectUrl = credentials.installed.redirect_uris[0];
+        var auth = new googleAuth();
+        var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
+        var authUrl = oauth2Client.generateAuthUrl({
+            access_type: 'offline',
+            scope: SCOPES
+        });
+        return authUrl;
+    };
 
     return {
         init: _init,
         send: _send,
         sendHTML: _sendHTML,
-        clearToken: _clearToken
+        sendWithToken: _sendWithToken,
+        sendHTMLWithToken: _sendHTMLWithToken,
+        clearToken: _clearToken,
+        generateUrl: _generateUrl,
+        generateToken: _generateToken,
+        event: emailEmitter
     }
 
 })();
 
-function authorize(credentials, callback) {
+function authorize(credentials, token, callback) {
     var clientSecret = credentials.installed.client_secret;
     var clientId = credentials.installed.client_id;
     var redirectUrl = credentials.installed.redirect_uris[0];
     var auth = new googleAuth();
     var oauth2Client = new auth.OAuth2(clientId, clientSecret, redirectUrl);
 
-    fs.readFile(__tokenFilePath, function (err, token) {
-        if (err) {
-            getNewToken(oauth2Client, callback);
-        } else {
-            oauth2Client.credentials = JSON.parse(token);
-            callback(oauth2Client);
-        }
-    });
+    if(token){
+        oauth2Client.credentials = token;
+        callback(oauth2Client);
+    }else {
+        fs.readFile(__tokenFilePath, function (err, token) {
+            if (err) {
+                getNewToken(oauth2Client, callback);
+            } else {
+                oauth2Client.credentials = JSON.parse(token);
+                callback(oauth2Client);
+            }
+        });
+    }
 }
 
 function makeBody(to, subject, message, type) {
     var str = [];
-    if(type=='html'){
+    if (type == 'html') {
         str.push("Content-Type: text/html; charset=\"UTF-8\"\n")
-    }else{
+    } else {
         str.push("Content-Type: text/plain; charset=\"UTF-8\"\n")
     }
     str.push("MIME-Version: 1.0\n");
@@ -86,7 +131,10 @@ function sendMail(auth, emailObject, type, callback) {
         resource: {
             raw: raw
         }
-    }, callback);
+    }, (error, success) => {
+        callback(error, success);
+        emailEmitter.emit('sent', {error, success});
+    });
 }
 
 function getNewToken(oauth2Client, callback) {
@@ -110,6 +158,7 @@ function getNewToken(oauth2Client, callback) {
             oauth2Client.credentials = token;
             storeToken(token, __tokenFilePath);
             callback(oauth2Client);
+            emailEmitter.emit('token', token);
         });
     });
 }
