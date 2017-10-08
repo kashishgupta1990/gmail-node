@@ -104,7 +104,7 @@ function authorize(credentials, token, callback) {
     }
 }
 
-function makeBody(to, subject, message, type) {
+function makeBody(toObj, subject, message, type) {
     var str = [];
     if (type == 'html') {
         str.push("Content-Type: text/html; charset=\"UTF-8\"\n")
@@ -113,7 +113,9 @@ function makeBody(to, subject, message, type) {
     }
     str.push("MIME-Version: 1.0\n");
     str.push("Content-Transfer-Encoding: 7bit\n");
-    str.push("to: ", to, "\n");
+    if (toObj.to) str.push("to: ", toObj.to, "\n");
+    if (toObj.bcc) str.push("bcc: ", toObj.bcc, "\n");
+    if (toObj.cc) str.push("cc: ", toObj.cc, "\n");
     str.push("subject: ", subject, "\n\n");
     str.push(message);
     str = str.join('');
@@ -123,7 +125,7 @@ function makeBody(to, subject, message, type) {
 
 function sendMail(auth, emailObject, type, callback) {
     var gmail = google.gmail('v1');
-    var raw = makeBody(emailObject.to, emailObject.subject, emailObject.message, type);
+    var raw = makeBody({to:emailObject.to,bcc:emailObject.bcc,cc:emailObject.cc}, emailObject.subject, emailObject.message, type);
 
     gmail.users.messages.send({
         auth: auth,
